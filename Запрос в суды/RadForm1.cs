@@ -214,7 +214,7 @@ namespace Запрос_в_суды
                     var zayadate = bookmarks.First(bms => bms.Name == "zayadate");
                     if (Convert.ToString(finddata.Rows[y].ItemArray[9]) != "")
                     {
-                        var runzayadate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[9]));
+                        var runzayadate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[9])));
                         zayadate.Parent.InsertAfter(runzayadate, zayadate);
                     }
                     else
