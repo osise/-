@@ -58,7 +58,7 @@ namespace Запрос_в_суды
             try
             {
                 dt_copy = dt.Copy();
-                dt_copy = dt_copy.DefaultView.ToTable(true, dt_copy.Columns[15].ColumnName.ToLower()); //distinct values from column 0
+                dt_copy = dt_copy.DefaultView.ToTable(true, dt_copy.Columns[14].ColumnName.ToLower()); //distinct values from column 0
             }
             catch (Exception ex)
             {
@@ -74,7 +74,7 @@ namespace Запрос_в_суды
                     finddata.Clear();
                     for (int i = 0; i < dt.Rows.Count; i++) //сбор данных по одному объекту
                     {
-                        if (Convert.ToString(dt.Rows[i][15]).ToLower() == Convert.ToString(dt_copy.Rows[y][0]).ToLower()) 
+                        if (Convert.ToString(dt.Rows[i][14]).ToLower() == Convert.ToString(dt_copy.Rows[y][0]).ToLower()) 
                         {
                             finddata.ImportRow(dt.Rows[i]);
                             dt.Rows.RemoveAt(i); //гениально!!!!
@@ -90,8 +90,8 @@ namespace Запрос_в_суды
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Не удалось записать файлы " + ex + Convert.ToString(dt_copy.Rows[y][0]));
-                sb.Append(DateTime.Now + ": Не удалось записать файлы\r\n" + ex);
+                MessageBox.Show("Не удалось записать файлы. Наименование суда слишком длинное " + Convert.ToString(dt_copy.Rows[y][0]));
+                sb.Append(DateTime.Now + ": Не удалось записать файлы.Наименование суда слишком длинное " + Convert.ToString(dt_copy.Rows[y][0]) + ex);
             }
         }
 
@@ -135,11 +135,11 @@ namespace Запрос_в_суды
             string path = "";
             string snils = "";
             string fio = "";
-            string numsud = "";
+           // string numsud = "";
 
             for (int y = 0; y < finddata.Rows.Count; y++)
             {
-                numsud = Convert.ToString(finddata.Rows[y].ItemArray[8]).Replace('/', '-') ;
+              //  numsud = Convert.ToString(finddata.Rows[y].ItemArray[8]).Replace('/', '-') ;
                 snils = Convert.ToString(finddata.Rows[y].ItemArray[2]);
                 if (snils.Length == 10)
                 {
@@ -163,24 +163,40 @@ namespace Запрос_в_суды
                     {
                         if (Directory.Exists(@"C:\Sort-SUD\Нет суда" + "\\"))
                         {
-                            if (File.Exists(@"C:\Sort-SUD\Нет суда" + "\\" + fio + " " +  numsud + ".docx"))
+                            if (File.Exists(@"C:\Sort-SUD\Нет суда" + "\\" + fio + " " +  /*numsud +*/ ".docx"))
                             {
-                                path = @"C:\Sort-SUD\Нет суда" + "\\" + fio + " " + numsud + "_1.docx";
+                                path = @"C:\Sort-SUD\Нет суда" + "\\" + fio + " " + /*numsud +*/ "_1.docx";
                             }
                             else
                             {
-                                path = @"C:\Sort-SUD\Нет суда" + "\\" + fio + " " + numsud + ".docx";
+                                path = @"C:\Sort-SUD\Нет суда" + "\\" + fio + " " + /*numsud +*/ ".docx";
                             }
                         }
                         else
                         {
                             DirectoryInfo di = Directory.CreateDirectory(@"C:\Sort-SUD\Нет суда" + "\\");
-                            path = @"C:\Sort-SUD\Нет суда" + "\\" + fio + " " + numsud + ".docx";
+                            path = @"C:\Sort-SUD\Нет суда" + "\\" + fio + " " + /*numsud +*/ ".docx";
                         }
                     }
                     else
                     {
-                        path = @"C:\Sort-SUD\" + meds + "\\" + fio + " " + numsud + ".docx";
+                        if (Directory.Exists(@"C:\Sort-SUD\" + meds + "\\"))
+                        {
+                            if (File.Exists(@"C:\Sort-SUD\" + meds + "\\" + fio + " " + /*numsud +*/ ".docx"))
+                            {
+                                path = @"C:\Sort-SUD\" + meds + "\\" + fio + " " + /*numsud +*/ "_" + y + ".docx";
+                            }
+                            else
+                            {
+                                path = @"C:\Sort-SUD\" + meds + "\\" + fio + " " + /*numsud +*/ ".docx";
+                            }
+                        }
+                        else
+                        {
+                            DirectoryInfo di = Directory.CreateDirectory(@"C:\Sort-SUD\" + meds + "\\");
+                            path = @"C:\Sort-SUD\" + meds + "\\" + fio + " " + /*numsud +*/ ".docx";
+                        }
+                        
                     }
 
                     var newDoc = (WordprocessingDocument)originalDoc.Clone(path, true);
@@ -196,9 +212,9 @@ namespace Запрос_в_суды
 
                     //Дата рождения заявителя
                     var zayadate = bookmarks.First(bms => bms.Name == "zayadate");
-                    if (Convert.ToString(finddata.Rows[y].ItemArray[12]) != "")
+                    if (Convert.ToString(finddata.Rows[y].ItemArray[9]) != "")
                     {
-                        var runzayadate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[10]).Substring(0, 10)));
+                        var runzayadate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[9]));
                         zayadate.Parent.InsertAfter(runzayadate, zayadate);
                     }
                     else
@@ -209,24 +225,24 @@ namespace Запрос_в_суды
                     
                     // Наименование судебного органа:
                     var nsud = bookmarks.First(bms => bms.Name == "nsud");
-                    var runnsud = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[15])));
+                    var runnsud = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[14])));
                     nsud.Parent.InsertAfter(runnsud, nsud);
 
                     //  Дата вынесения судебного решения, номер дела(при наличии): 
                     var datesud = bookmarks.First(bms => bms.Name == "datesud");
-                    var rundatesud = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[14])));
+                    var rundatesud = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[13])));
                     datesud.Parent.InsertAfter(rundatesud, datesud);
 
                     //ФИО, снилс несовершеннолетнего:    
                     var childfio = bookmarks.First(bms => bms.Name == "childfio");
-                    var runchildfio = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[11])));
+                    var runchildfio = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[10])));
                     childfio.Parent.InsertAfter(runchildfio, childfio);
 
                     //Дата рождения несовершеннолетнего:
                     var childdate = bookmarks.First(bms => bms.Name == "childdate");
-                    if (Convert.ToString(finddata.Rows[y].ItemArray[12]) != "")
+                    if (Convert.ToString(finddata.Rows[y].ItemArray[11]) != "")
                     {
-                        var runchilddate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[12]).Substring(0, 10)));
+                        var runchilddate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[11])));//.Substring(0, 10)));
                         childdate.Parent.InsertAfter(runchilddate, childdate);
                     }
                     else
@@ -237,7 +253,7 @@ namespace Запрос_в_суды
 
                     //ФИО должника на момент вынесения решения: 
                     var fiodolg = bookmarks.First(bms => bms.Name == "fiodolg");
-                    var runfiodolg = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[13])));
+                    var runfiodolg = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[12])));
                     fiodolg.Parent.InsertAfter(runfiodolg, fiodolg);
 
                     sb.Append(DateTime.Now + ": Создаем файл " + fio + "\r\n");
