@@ -205,6 +205,11 @@ namespace Запрос_в_суды
                     var document = mainPart.Document;
                     var bookmarks = document.Body.Descendants<BookmarkStart>();
 
+                    // Наименование судебного органа:
+                    var nsud2 = bookmarks.First(bms => bms.Name == "nsud2");
+                    var runnsud2 = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[14])));
+                    nsud2.Parent.InsertAfter(runnsud2, nsud2);
+
                     //ФИО заявителя
                     var zayav = bookmarks.First(bms => bms.Name == "zayav");
                     var runzayav = new Run(new Text( fio + " " + snils));

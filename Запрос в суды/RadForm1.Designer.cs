@@ -139,7 +139,7 @@ namespace Запрос_в_суды
             // 
             // 
             this.RootElement.ApplyShapeToControl = true;
-            this.Text = "   Создание запросов для судов v1.0.1";
+            this.Text = "   Создание запросов для судов v1.0.2";
             this.ThemeName = "Fluent";
             ((System.ComponentModel.ISupportInitialize)(this.radButton1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.radRichTextEditor1)).EndInit();
