@@ -53,12 +53,12 @@ namespace Запрос_в_суды
             File.WriteAllText(fullName, Properties.Resources.Template, Encoding.Default);
         }
 
-        public void UniqueEx() // найти уникальные значения
+        public void UniqueEx() // найти уникальные значения При изменении править тут
         {
             try
             {
                 dt_copy = dt.Copy();
-                dt_copy = dt_copy.DefaultView.ToTable(true, dt_copy.Columns[14].ColumnName.ToLower()); //distinct values from column 0
+                dt_copy = dt_copy.DefaultView.ToTable(true, dt_copy.Columns[13].ColumnName.ToLower()); //distinct values from column 0
             }
             catch (Exception ex)
             {
@@ -74,8 +74,8 @@ namespace Запрос_в_суды
                     finddata.Clear();
                     for (int i = 0; i < dt.Rows.Count; i++) //сбор данных по одному объекту
                     {
-                        if (Convert.ToString(dt.Rows[i][14]).ToLower() == Convert.ToString(dt_copy.Rows[y][0]).ToLower()) 
-                        {
+                        if (Convert.ToString(dt.Rows[i][13]).ToLower() == Convert.ToString(dt_copy.Rows[y][0]).ToLower())  //При изменении править тут
+                    {
                             finddata.ImportRow(dt.Rows[i]);
                             dt.Rows.RemoveAt(i); //гениально!!!!
                             i--;
@@ -90,7 +90,7 @@ namespace Запрос_в_суды
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Не удалось записать файлы. Наименование суда слишком длинное " + Convert.ToString(dt_copy.Rows[y][0]));
+                MessageBox.Show("Не удалось записать файлы. Проблема с " + Convert.ToString(dt_copy.Rows[y][0]));
                 sb.Append(DateTime.Now + ": Не удалось записать файлы.Наименование суда слишком длинное " + Convert.ToString(dt_copy.Rows[y][0]) + ex);
             }
         }
@@ -113,6 +113,7 @@ namespace Запрос_в_суды
 
         void InsertToDocX(DataTable finddata, string meds)
         {
+            meds = meds.Replace("\n", "");
             if (Directory.Exists(@"C:\Sort-SUD\" + meds + "\\"))
             { }
             else
@@ -132,6 +133,8 @@ namespace Запрос_в_суды
                 name = "Не найдены";
             }
 
+            
+
             string path = "";
             string snils = "";
             string fio = "";
@@ -139,8 +142,17 @@ namespace Запрос_в_суды
 
             for (int y = 0; y < finddata.Rows.Count; y++)
             {
-              //  numsud = Convert.ToString(finddata.Rows[y].ItemArray[8]).Replace('/', '-') ;
-                snils = Convert.ToString(finddata.Rows[y].ItemArray[2]);
+                string sud = Convert.ToString(finddata.Rows[y].ItemArray[13]);
+                string zdate = Convert.ToString(finddata.Rows[y].ItemArray[8]);
+                string suddate = Convert.ToString(finddata.Rows[y].ItemArray[12]);
+                string deti = Convert.ToString(finddata.Rows[y].ItemArray[9]);
+                string detirod = Convert.ToString(finddata.Rows[y].ItemArray[10]);
+                string doljnik = Convert.ToString(finddata.Rows[y].ItemArray[11]);
+                snils = Convert.ToString(finddata.Rows[y].ItemArray[0]);
+                fio = Convert.ToString(finddata.Rows[y].ItemArray[1]) + " " + Convert.ToString(finddata.Rows[y].ItemArray[2]) + " " + Convert.ToString(finddata.Rows[y].ItemArray[3]);
+             
+                //  numsud = Convert.ToString(finddata.Rows[y].ItemArray[8]).Replace('/', '-') ;
+
                 if (snils.Length == 10)
                 {
 
@@ -157,8 +169,7 @@ namespace Запрос_в_суды
                 {  }
 
                 using (var originalDoc = WordprocessingDocument.Open(fullName, true))
-                {
-                    fio = Convert.ToString(finddata.Rows[y].ItemArray[3]) + " " + Convert.ToString(finddata.Rows[y].ItemArray[4]) + " " + Convert.ToString(finddata.Rows[y].ItemArray[5]);
+                { 
                     if (meds.Length == 0)
                     {
                         if (Directory.Exists(@"C:\Sort-SUD\Нет суда" + "\\"))
@@ -207,7 +218,7 @@ namespace Запрос_в_суды
 
                     // Наименование судебного органа:
                     var nsud2 = bookmarks.First(bms => bms.Name == "nsud2");
-                    var runnsud2 = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[14])));
+                    var runnsud2 = new Run(new Text(sud));
                     nsud2.Parent.InsertAfter(runnsud2, nsud2);
 
                     //ФИО заявителя
@@ -217,9 +228,9 @@ namespace Запрос_в_суды
 
                     //Дата рождения заявителя
                     var zayadate = bookmarks.First(bms => bms.Name == "zayadate");
-                    if (Convert.ToString(finddata.Rows[y].ItemArray[9]) != "")
+                    if (zdate != "" && zdate.Length == 10)
                     {
-                        var runzayadate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[9])));
+                        var runzayadate = new Run(new Text(zdate.Substring(0,10)));
                         zayadate.Parent.InsertAfter(runzayadate, zayadate);
                     }
                     else
@@ -230,24 +241,24 @@ namespace Запрос_в_суды
                     
                     // Наименование судебного органа:
                     var nsud = bookmarks.First(bms => bms.Name == "nsud");
-                    var runnsud = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[14])));
+                    var runnsud = new Run(new Text(sud));
                     nsud.Parent.InsertAfter(runnsud, nsud);
 
                     //  Дата вынесения судебного решения, номер дела(при наличии): 
                     var datesud = bookmarks.First(bms => bms.Name == "datesud");
-                    var rundatesud = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[13])));
+                    var rundatesud = new Run(new Text(suddate));
                     datesud.Parent.InsertAfter(rundatesud, datesud);
 
                     //ФИО, снилс несовершеннолетнего:    
                     var childfio = bookmarks.First(bms => bms.Name == "childfio");
-                    var runchildfio = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[10])));
+                    var runchildfio = new Run(new Text(deti));
                     childfio.Parent.InsertAfter(runchildfio, childfio);
 
                     //Дата рождения несовершеннолетнего:
                     var childdate = bookmarks.First(bms => bms.Name == "childdate");
-                    if (Convert.ToString(finddata.Rows[y].ItemArray[11]) != "")
+                    if (detirod != "")
                     {
-                        var runchilddate = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[11])));//.Substring(0, 10)));
+                        var runchilddate = new Run(new Text(detirod));//.Substring(0, 10)));
                         childdate.Parent.InsertAfter(runchilddate, childdate);
                     }
                     else
@@ -258,7 +269,7 @@ namespace Запрос_в_суды
 
                     //ФИО должника на момент вынесения решения: 
                     var fiodolg = bookmarks.First(bms => bms.Name == "fiodolg");
-                    var runfiodolg = new Run(new Text(Convert.ToString(finddata.Rows[y].ItemArray[12])));
+                    var runfiodolg = new Run(new Text(doljnik));
                     fiodolg.Parent.InsertAfter(runfiodolg, fiodolg);
 
                     sb.Append(DateTime.Now + ": Создаем файл " + fio + "\r\n");
