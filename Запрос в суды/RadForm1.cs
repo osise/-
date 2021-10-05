@@ -1,39 +1,33 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Telerik.WinControls;
-using Telerik.WinControls.UI;
 using System.IO;
-using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
-using System.Threading;
-using System.Threading.Tasks;
-using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Spreadsheet;
-using System.Diagnostics;
 using ExcelDataReader;
-using Table = DocumentFormat.OpenXml.Wordprocessing.Table;
 using Text = DocumentFormat.OpenXml.Wordprocessing.Text;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Run = DocumentFormat.OpenXml.Wordprocessing.Run;
+using ExportToExcel;
+
 
 namespace Запрос_в_суды
 {
     public partial class RadForm1 : Telerik.WinControls.UI.RadForm
     {
         string nowpath = "";
-        DirectoryInfo di;
+       // DirectoryInfo di;
         string fullName = Path.Combine(Environment.ExpandEnvironmentVariables("%temp%"), "Template.docx");
         private BackgroundWorker bw = new BackgroundWorker();
         int cou = 0;
         int cat = 0;
+        int chk;
         public DataTable dt = new DataTable();
         public DataTable dt_copy = new DataTable();
+        public DataTable to_excel = new DataTable();
+        public DataSet ds = new DataSet();
         public DataTable finddata = new DataTable();
         public DataTable today = new DataTable();
         public DataTable yesterday = new DataTable();
@@ -53,12 +47,18 @@ namespace Запрос_в_суды
             File.WriteAllText(fullName, Properties.Resources.Template, Encoding.Default);
         }
 
+        public void addDataToExcel(string path, DataTable data)
+        {
+
+        }
+
         public void UniqueEx() // найти уникальные значения При изменении править тут
         {
             try
             {
                 dt_copy = dt.Copy();
-                dt_copy = dt_copy.DefaultView.ToTable(true, dt_copy.Columns[13].ColumnName.ToLower()); //distinct values from column 0
+                to_excel = dt.Copy();
+                dt_copy = dt_copy.DefaultView.ToTable(true, dt_copy.Columns[11].ColumnName.ToLower()); //distinct values from column 0
             }
             catch (Exception ex)
             {
@@ -71,22 +71,28 @@ namespace Запрос_в_суды
         {
             try
             {
-                    finddata.Clear();
+                //to_excel.Clear();
+                finddata.Clear();
                     for (int i = 0; i < dt.Rows.Count; i++) //сбор данных по одному объекту
                     {
-                        if (Convert.ToString(dt.Rows[i][13]).ToLower() == Convert.ToString(dt_copy.Rows[y][0]).ToLower())  //При изменении править тут
-                    {
+                        if (Convert.ToString(dt.Rows[i][11]).ToLower() == Convert.ToString(dt_copy.Rows[y][0]).ToLower())  //При изменении править тут
+                        {
                             finddata.ImportRow(dt.Rows[i]);
                             dt.Rows.RemoveAt(i); //гениально!!!!
                             i--;
                         }
-                    }
-                    cou += finddata.Rows.Count;
 
-                    InsertToDocX(finddata, Convert.ToString(dt_copy.Rows[y][0]));
-                    
-                    
-                
+                }
+                cou += finddata.Rows.Count;
+
+                InsertToDocX(finddata, Convert.ToString(dt_copy.Rows[y][0]));
+
+
+
+
+
+
+
             }
             catch (Exception ex)
             {
@@ -95,20 +101,28 @@ namespace Запрос_в_суды
             }
         }
 
-        public static string InsertStrings(string text, string insertString, params int[] rangeLengths)
+        public string InsertStrings(string text, string insertString, params int[] rangeLengths)
         {
-            var sb = new StringBuilder(text);
-            var indexes = new int[rangeLengths.Length];
-            for (int i = 0; i < indexes.Length; i++)
-                indexes[i] = rangeLengths[i] + indexes.ElementAtOrDefault(i - 1) + insertString.Length;
-
-            for (int i = 0; i < indexes.Length; i++)
+            var sb1 = new StringBuilder(text);
+            try
             {
-                if (indexes[i] < sb.Length)
-                    sb.Insert(indexes[i], insertString);
-            }
+                
+                var indexes = new int[rangeLengths.Length];
+                for (int i = 0; i < indexes.Length; i++)
+                    indexes[i] = rangeLengths[i] + indexes.ElementAtOrDefault(i - 1) + insertString.Length;
 
-            return sb.ToString();
+                    for (int i = 0; i < indexes.Length; i++)
+                    {
+                        if (indexes[i] < sb1.Length)
+                            sb1.Insert(indexes[i], insertString);
+                    }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Не удалось записать файлы. Проблема с форматом снилса");
+                sb.Append(DateTime.Now + ": Не удалось записать файлы. Проблема с форматом снилса" + ex);
+            }
+            return sb1.ToString();
         }
 
         void InsertToDocX(DataTable finddata, string meds)
@@ -138,16 +152,28 @@ namespace Запрос_в_суды
             string path = "";
             string snils = "";
             string fio = "";
+            string ishod = "";
            // string numsud = "";
 
             for (int y = 0; y < finddata.Rows.Count; y++)
             {
-                string sud = Convert.ToString(finddata.Rows[y].ItemArray[13]);
-                string zdate = Convert.ToString(finddata.Rows[y].ItemArray[8]);
-                string suddate = Convert.ToString(finddata.Rows[y].ItemArray[12]);
-                string deti = Convert.ToString(finddata.Rows[y].ItemArray[9]);
-                string detirod = Convert.ToString(finddata.Rows[y].ItemArray[10]);
-                string doljnik = Convert.ToString(finddata.Rows[y].ItemArray[11]);
+                string sud = Convert.ToString(finddata.Rows[y].ItemArray[11]);
+                if(Convert.ToString(finddata.Rows[y].ItemArray[5]).Length == 0)
+                {
+                    sb.Append("\r\n");
+                    sb.Append(DateTime.Now + ": Регномер пуст!\r\n");
+                    ishod = "";
+                }
+                else
+                {
+                    ishod = Convert.ToString(finddata.Rows[y].ItemArray[5]).Substring(17, 7);
+                }
+                string today = "От " + Convert.ToString(DateTime.Today).Substring(0, 10) + "   ";
+                string zdate = Convert.ToString(finddata.Rows[y].ItemArray[6]);
+                string suddate = Convert.ToString(finddata.Rows[y].ItemArray[10]);
+                string deti = Convert.ToString(finddata.Rows[y].ItemArray[7]);
+                string detirod = Convert.ToString(finddata.Rows[y].ItemArray[8]);
+                string doljnik = Convert.ToString(finddata.Rows[y].ItemArray[9]);
                 snils = Convert.ToString(finddata.Rows[y].ItemArray[0]);
                 fio = Convert.ToString(finddata.Rows[y].ItemArray[1]) + " " + Convert.ToString(finddata.Rows[y].ItemArray[2]) + " " + Convert.ToString(finddata.Rows[y].ItemArray[3]);
              
@@ -221,6 +247,16 @@ namespace Запрос_в_суды
                     var runnsud2 = new Run(new Text(sud));
                     nsud2.Parent.InsertAfter(runnsud2, nsud2);
 
+                    // Наименование судебного органа:
+                    var ntoday = bookmarks.First(bms => bms.Name == "today");
+                    var runtoday = new Run(new Text(today));
+                    ntoday.Parent.InsertAfter(runtoday, ntoday);
+
+                    // исходящий номер:
+                    var nishod = bookmarks.First(bms => bms.Name == "ishod");
+                    var runnishod = new Run(new Text(ishod));
+                    nishod.Parent.InsertAfter(runnishod, nishod);
+
                     //ФИО заявителя
                     var zayav = bookmarks.First(bms => bms.Name == "zayav");
                     var runzayav = new Run(new Text( fio + " " + snils));
@@ -258,8 +294,18 @@ namespace Запрос_в_суды
                     var childdate = bookmarks.First(bms => bms.Name == "childdate");
                     if (detirod != "")
                     {
-                        var runchilddate = new Run(new Text(detirod));//.Substring(0, 10)));
-                        childdate.Parent.InsertAfter(runchilddate, childdate);
+                        if(detirod.Contains(","))
+                        {
+                           // string[] arr = detirod.Split(',');
+                            var runchilddate = new Run(new Text(detirod));
+                            childdate.Parent.InsertAfter(runchilddate, childdate);
+                        }
+                        
+                        else
+                        {
+                            var runchilddate = new Run(new Text(detirod.Substring(0, 10)));
+                            childdate.Parent.InsertAfter(runchilddate, childdate);
+                        }
                     }
                     else
                     {
@@ -272,10 +318,34 @@ namespace Запрос_в_суды
                     var runfiodolg = new Run(new Text(doljnik));
                     fiodolg.Parent.InsertAfter(runfiodolg, fiodolg);
 
+                    string ishod2;
+                    if (Convert.ToString(to_excel.Rows[chk].ItemArray[5]).Length == 0)
+                    {
+                        ishod2 = "";
+                    }
+                    else
+                    {
+                        ishod2 = Convert.ToString(to_excel.Rows[chk].ItemArray[5]).Substring(17, 7);
+                    }
+
+                    to_excel.Rows[chk][12] = ishod2;
+                    to_excel.Rows[chk][13] = Convert.ToString(DateTime.Today).Substring(0, 10);
+                    chk++;
+
+                 /*    DataRow workrow = to_excel.NewRow();
+                     workrow[12] = ishod;
+                     workrow[13] = today;
+                     to_excel.Rows.Add(workrow);*/
+
+
+
+
                     sb.Append(DateTime.Now + ": Создаем файл " + fio + "\r\n");
                     cat++;
                     //newDoc.Save();
                     newDoc.Close();
+
+
                    // sb.Append(DateTime.Now + ": Скопировано строк :" + finddata.Rows.Count + "\r\n");
                 }
                 sb.Append(DateTime.Now + ": Скопировано строк :" + cat + "\r\n");
@@ -376,6 +446,7 @@ namespace Запрос_в_суды
             CheckDir();
             BackgroundWorker worker = sender as BackgroundWorker;
 
+            chk = 0;
             cou = 0;
             cat = 0;
             finddata = dt.Clone();
@@ -395,6 +466,8 @@ namespace Запрос_в_суды
                 File.AppendAllText(@"C:\Sort-SUD\log.txt", sb.ToString());
                 sb.Clear();
             }
+            ds.Tables.Add(to_excel);
+            CreateExcelFile.CreateExcelDocument(ds, ExcelFilePath);
 
 
             finddata.Dispose();
